@@ -32,9 +32,8 @@ export default class MainPage extends Component<{}, IMainPageState>{
     }
 
     private async connect() {
-        this.wss = new WSControl({host: urlService});
-        const respond: any = await this.wss!.open();
-        const msg: any = this.validateIncomingMessage(respond);
+        this.wss = new WSControl(urlService);
+        
     }
 
     private disconnect() {
