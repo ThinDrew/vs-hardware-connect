@@ -13,6 +13,12 @@ const HOST: string = window.location.hostname;
 const port: number = 5000;
 const URL: string = `${HOST}:${port}`;
 const urlService: string = `ws://${URL}`;
+const request = {
+    "cmd":[1, 17, 192, 44],
+    "timeOut":100,
+    "ChunksEndTime":1,
+    "NotRespond":false
+}
 
 export default class MainPage extends Component<{}, IMainPageState>{
     timerId: any;
@@ -81,15 +87,27 @@ export default class MainPage extends Component<{}, IMainPageState>{
         clearInterval(this.timerId);
     }
 
+    private async sendRequest(e: any){
+        try{
+            const respond: string | undefined = await this.wss?.send(JSON.stringify(request));
+            console.log(respond);
+        }
+        catch (error: any) {
+            console.log(`error: ${error}`);
+        }
+        
+    }
+
     render(): React.ReactNode {
         return(
             <div>
                 <input type="button" value={this.state.isConnect? "Disconnect" : "Connect"} onClick={async(e) => await this.socketControl(e)}/>
-                <input type="button" value="Send" disabled={!this.state.isConnect}/>
+                <input type="button" value="Send" disabled={!this.state.isConnect} onClick={async(e) => await this.sendRequest(e)}/>
                 <p>message: {this.state.count}</p>
                 <p>status:</p>
                 <p>text:</p>
             </div>
         )
     }
+    
 }
