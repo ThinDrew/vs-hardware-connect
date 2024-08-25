@@ -4,9 +4,24 @@ import { IErrorMessage } from "./interfaces/IErrorMessage";
 import { IServiceRespond } from "./interfaces/IServiceRespond";
 import { validationJSON } from "./lib/util/errors";
 
+interface IRespond {
+    status: string | undefined;
+    duration: string | undefined;
+    time: string | undefined;
+    msg: string | Array<number> | undefined;
+}
+
+const defaultRespond: IRespond = {
+    status: undefined,
+    duration: undefined,
+    time: undefined,
+    msg: undefined
+};
+
 interface IMainPageState {
     count: number;
     isConnect: boolean;
+    respond: IRespond
 }
 
 const HOST: string = window.location.hostname;
@@ -28,7 +43,8 @@ export default class MainPage extends Component<{}, IMainPageState>{
         super(props);
         this.state = {
             count: 0,
-            isConnect: false
+            isConnect: false,
+            respond: defaultRespond
         }
     }
 
@@ -87,10 +103,22 @@ export default class MainPage extends Component<{}, IMainPageState>{
         clearInterval(this.timerId);
     }
 
+    validateRespond(respond: any): IRespond{
+        const resp: any = JSON.parse(respond);
+        let aboba: IRespond = {...defaultRespond, ...resp};
+        if (aboba.status == "OK"){
+            //TODO: Распарсить массив в строку, удалив первые и последние 2 байта 
+            let array!: Array<number> = aboba.msg
+            console.log(array)
+        }
+        console.log(aboba)
+        return aboba;
+    }
+
     private async sendRequest(e: any){
         try{
             const respond: string | undefined = await this.wss?.send(JSON.stringify(request));
-            console.log(respond);
+            this.setState(({respond: this.validateRespond(respond)})) 
         }
         catch (error: any) {
             console.log(`error: ${error}`);
@@ -103,9 +131,8 @@ export default class MainPage extends Component<{}, IMainPageState>{
             <div>
                 <input type="button" value={this.state.isConnect? "Disconnect" : "Connect"} onClick={async(e) => await this.socketControl(e)}/>
                 <input type="button" value="Send" disabled={!this.state.isConnect} onClick={async(e) => await this.sendRequest(e)}/>
-                <p>message: {this.state.count}</p>
-                <p>status:</p>
-                <p>text:</p>
+                <p>status: {this.state.respond.status}</p>
+                <p>message: {this.state.respond.msg}</p>
             </div>
         )
     }
