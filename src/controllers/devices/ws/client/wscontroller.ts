@@ -1,15 +1,22 @@
-
 export default class WSControl {
 
     private host: string;
     private ws:WebSocket | undefined;
     private hostState: boolean = false;
+    public onOpenUserHandler: Function = ()=>{};
+    public onCloseUserHandler: Function = ()=>{};
 
     private count: number = 0;
 
     constructor (host: string){
         this.host = host;
         this.initSocket();
+    }
+
+    public close(){
+        if (this.ws){
+            this.ws.close();
+        }
     }
 
     public async send(request: string): Promise<string> {
@@ -57,6 +64,7 @@ export default class WSControl {
     private onOpen(event: any) {
         console.log(`Opened connection to ${this.host}`);
         this.hostState = true;
+        this.onOpenUserHandler();
     }    
 
     private onError(event: any) {
@@ -66,10 +74,12 @@ export default class WSControl {
     private onClose(event: any) {
         console.log(`Closed connection to ${this.host}`);
         this.hostState = false;
+        this.onCloseUserHandler();    
+
         setTimeout(() => {
             console.log(`Try connect to ${this.host}`);
             this.initSocket();
-        }, 1000);        
+        }, 1000);    
     }
 
     //чтени сокета в режиме запрос-ожидание ответа- ответ

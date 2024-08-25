@@ -31,19 +31,30 @@ export default class MainPage extends Component<{}, IMainPageState>{
         return msg;
     }
 
+    private setConnectionStateToOpen(){
+        this.setState((state) => ({
+            isConnect: true
+        }));
+    }
+
+    private setConnectionStateToClose(){
+        this.setState((state) => ({
+            isConnect: false
+        }));
+    }
+
     private async connect() {
         this.wss = new WSControl(urlService);
-        
+        this.wss.onOpenUserHandler = this.setConnectionStateToOpen.bind(this);
     }
 
     private disconnect() {
-
+        this.wss?.close()
+        this.wss!.onCloseUserHandler = this.setConnectionStateToClose.bind(this);
     }
 
     private async socketControl(e: any){
-        // this.setState((state) => ({
-        //     isConnect: !state.isConnect
-        // }));
+        
         if (this.state.isConnect){
             this.disconnect()
         }
