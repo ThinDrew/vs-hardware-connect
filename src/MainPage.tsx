@@ -26,7 +26,6 @@ const defaultRespond: IRespond = {
 };
 
 interface IMainPageState {
-    count: number;
     connectionStatus: ConnectionStatus;
     isSendingRequests: boolean;
     respond: IRespond;
@@ -50,7 +49,6 @@ export default class MainPage extends Component<{}, IMainPageState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            count: 0,
             connectionStatus: ConnectionStatus.Disconnected,
             isSendingRequests: false,
             respond: defaultRespond,
@@ -78,7 +76,7 @@ export default class MainPage extends Component<{}, IMainPageState> {
     }
 
     private async connect() {
-        this.setState({connectionStatus: ConnectionStatus.Connecting})
+        this.setState({ connectionStatus: ConnectionStatus.Connecting })
         this.wss = new WSControl(urlService);
         this.wss.onOpenUserHandler = this.setConnectionStateToOpen.bind(this);
     }
@@ -144,7 +142,7 @@ export default class MainPage extends Component<{}, IMainPageState> {
         );
     }
 
-    private isConnected(){
+    private isConnected() {
         if (this.state.connectionStatus === ConnectionStatus.Connected)
             return true
         else if (this.state.connectionStatus === ConnectionStatus.Disconnected)
@@ -153,16 +151,19 @@ export default class MainPage extends Component<{}, IMainPageState> {
 
     render(): React.ReactNode {
         const statusColor = this.state.respond.status === "OK" ? "green" : "red";
+
         const connectionColor =
             this.state.connectionStatus === ConnectionStatus.Connected
                 ? "green"
                 : this.state.connectionStatus === ConnectionStatus.Connecting
-                ? "gray"
-                : "red";
+                    ? "gray"
+                    : "red";
+
+        const { connectionStatus, isSendingRequests, respond } = this.state
 
         return (
             <div>
-                <p><span style={{ color: connectionColor }}>{this.state.connectionStatus}</span></p>
+                <p><span style={{ color: connectionColor }}>{connectionStatus}</span></p>
                 <div className="button-container">
                     <input
                         type="button"
@@ -185,11 +186,11 @@ export default class MainPage extends Component<{}, IMainPageState> {
                         onClick={async (e) => await this.startSendingRequests(e)}
                     />
                 </div>
-                
-                <p className="message-label">status: <span style={{ color: statusColor }}>{this.state.respond.status}</span></p>
-                <p className="message-label">message: <span style={{ color: "white" }}>{this.state.respond.msg}</span></p>
-                <p className="message-label">duration: <span style={{ color: "white" }}>{this.state.respond.duration}</span></p>
-                <p className="message-label">time: <span style={{ color: "white" }}>{this.state.respond.time}</span></p>
+
+                <p className="message-label">status: <span style={{ color: statusColor }}>{respond.status}</span></p>
+                <p className="message-label">message: <span style={{ color: "white" }}>{respond.msg}</span></p>
+                <p className="message-label">duration: <span style={{ color: "white" }}>{respond.duration}</span></p>
+                <p className="message-label">time: <span style={{ color: "white" }}>{respond.time}</span></p>
             </div>
         );
     }

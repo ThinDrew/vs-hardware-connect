@@ -7,6 +7,7 @@ input[type="button"] {
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s;
+    width: 150px;
 }
 
 input[type="button"]:disabled {
@@ -23,6 +24,8 @@ input[type="button"]:hover:not(:disabled) {
     flex-direction: column;
     gap: 10px;
     margin-bottom: 20px;
+    align-items: center;
+    justify-content: center;
 }
 
 .message-label {
