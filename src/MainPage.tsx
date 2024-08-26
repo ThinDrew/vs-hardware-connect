@@ -3,6 +3,13 @@ import WSControl from "./controllers/devices/ws/client/wscontroller";
 import { IErrorMessage } from "./interfaces/IErrorMessage";
 import { IServiceRespond } from "./interfaces/IServiceRespond";
 import { validationJSON } from "./lib/util/errors";
+import "./MainPage.css"
+
+enum ConnectionStatus {
+    Disconnected = "Disconnected",
+    Connecting = "Connecting...",
+    Connected = "Connected",
+}
 
 interface IRespond {
     status: string | undefined;
@@ -20,7 +27,7 @@ const defaultRespond: IRespond = {
 
 interface IMainPageState {
     count: number;
-    isConnected: boolean;
+    connectionStatus: ConnectionStatus;
     isSendingRequests: boolean;
     respond: IRespond;
 }
@@ -44,7 +51,7 @@ export default class MainPage extends Component<{}, IMainPageState> {
         super(props);
         this.state = {
             count: 0,
-            isConnected: false,
+            connectionStatus: ConnectionStatus.Disconnected,
             isSendingRequests: false,
             respond: defaultRespond,
         };
@@ -59,18 +66,19 @@ export default class MainPage extends Component<{}, IMainPageState> {
 
     private setConnectionStateToOpen() {
         this.setState((state) => ({
-            isConnected: true,
+            connectionStatus: ConnectionStatus.Connected,
         }));
     }
 
     private setConnectionStateToClose() {
         this.setState((state) => ({
-            isConnected: false,
+            connectionStatus: ConnectionStatus.Disconnected,
             isSendingRequests: false
         }));
     }
 
     private async connect() {
+        this.setState({connectionStatus: ConnectionStatus.Connecting})
         this.wss = new WSControl(urlService);
         this.wss.onOpenUserHandler = this.setConnectionStateToOpen.bind(this);
     }
@@ -81,25 +89,11 @@ export default class MainPage extends Component<{}, IMainPageState> {
     }
 
     private async socketControl(e: any) {
-        if (this.state.isConnected) {
+        if (this.isConnected()) {
             this.disconnect();
         } else {
             await this.connect();
         }
-    }
-
-    incCounter(e: any) {
-        this.setState((state) => ({
-            count: state.count + 1,
-        }));
-    }
-
-    componentDidMount(): void {
-        this.timerId = setInterval((e: any) => this.incCounter(e), 1000);
-    }
-
-    componentWillUnmount(): void {
-        clearInterval(this.timerId);
     }
 
     validateRespond(respond: any): IRespond {
@@ -150,30 +144,52 @@ export default class MainPage extends Component<{}, IMainPageState> {
         );
     }
 
+    private isConnected(){
+        if (this.state.connectionStatus === ConnectionStatus.Connected)
+            return true
+        else if (this.state.connectionStatus === ConnectionStatus.Disconnected)
+            return false
+    }
+
     render(): React.ReactNode {
+        const statusColor = this.state.respond.status === "OK" ? "green" : "red";
+        const connectionColor =
+            this.state.connectionStatus === ConnectionStatus.Connected
+                ? "green"
+                : this.state.connectionStatus === ConnectionStatus.Connecting
+                ? "gray"
+                : "red";
+
         return (
             <div>
-                <input
-                    type="button"
-                    value={this.state.isConnected ? "Disconnect" : "Connect"}
-                    onClick={async (e) => await this.socketControl(e)}
-                />
-                <input
-                    type="button"
-                    value="Send"
-                    disabled={!this.state.isConnected || this.state.isSendingRequests}
-                    onClick={async (e) => await this.sendRequest(e)}
-                />
-                <input
-                    type="button"
-                    value={this.state.isSendingRequests ? "Stop" : "Start"}
-                    disabled={!this.state.isConnected}
-                    onClick={async (e) => await this.startSendingRequests(e)}
-                />
-                <p>status: {this.state.respond.status}</p>
-                <p>message: {this.state.respond.msg}</p>
-                <p>duration: {this.state.respond.duration}</p>
-                <p>time: {this.state.respond.time}</p>
+                <p><span style={{ color: connectionColor }}>{this.state.connectionStatus}</span></p>
+                <div className="button-container">
+                    <input
+                        type="button"
+                        value={this.isConnected() ? "Disconnect" : "Connect"}
+                        onClick={async (e) => await this.socketControl(e)}
+                        style={{
+                            backgroundColor: this.isConnected() ? "#ca3c3c" : "#0056b3"
+                        }}
+                    />
+                    <input
+                        type="button"
+                        value="Send"
+                        disabled={!this.isConnected() || this.state.isSendingRequests}
+                        onClick={async (e) => await this.sendRequest(e)}
+                    />
+                    <input
+                        type="button"
+                        value={this.state.isSendingRequests ? "Stop" : "Start"}
+                        disabled={!this.isConnected()}
+                        onClick={async (e) => await this.startSendingRequests(e)}
+                    />
+                </div>
+                
+                <p className="message-label">status: <span style={{ color: statusColor }}>{this.state.respond.status}</span></p>
+                <p className="message-label">message: <span style={{ color: "white" }}>{this.state.respond.msg}</span></p>
+                <p className="message-label">duration: <span style={{ color: "white" }}>{this.state.respond.duration}</span></p>
+                <p className="message-label">time: <span style={{ color: "white" }}>{this.state.respond.time}</span></p>
             </div>
         );
     }
