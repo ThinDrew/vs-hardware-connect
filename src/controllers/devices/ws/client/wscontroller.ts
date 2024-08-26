@@ -76,10 +76,10 @@ export default class WSControl {
         this.hostState = false;
         this.onCloseUserHandler();    
 
-        setTimeout(() => {
-            console.log(`Try connect to ${this.host}`);
-            this.initSocket();
-        }, 1000);    
+        // setTimeout(() => {
+        //     console.log(`Try connect to ${this.host}`);
+        //     this.initSocket();
+        // }, 1000);    
     }
 
     //чтени сокета в режиме запрос-ожидание ответа- ответ

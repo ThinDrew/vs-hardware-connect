@@ -21,6 +21,7 @@ const defaultRespond: IRespond = {
 interface IMainPageState {
     count: number;
     isConnected: boolean;
+    isSendingRequests: boolean;
     respond: IRespond;
 }
 
@@ -44,6 +45,7 @@ export default class MainPage extends Component<{}, IMainPageState> {
         this.state = {
             count: 0,
             isConnected: false,
+            isSendingRequests: false,
             respond: defaultRespond,
         };
     }
@@ -64,6 +66,7 @@ export default class MainPage extends Component<{}, IMainPageState> {
     private setConnectionStateToClose() {
         this.setState((state) => ({
             isConnected: false,
+            isSendingRequests: false
         }));
     }
 
@@ -131,6 +134,22 @@ export default class MainPage extends Component<{}, IMainPageState> {
         }
     }
 
+    private async startSendingRequests(e: any) {
+        console.log(this.state.isSendingRequests);
+        this.setState(
+            (state) => ({
+                isSendingRequests: !state.isSendingRequests
+            }),
+            async () => {
+                // Этот колбэк выполнится после обновления состояния
+                console.log(this.state.isSendingRequests);
+                while (this.state.isSendingRequests) {
+                    await this.sendRequest(e);
+                }
+            }
+        );
+    }
+
     render(): React.ReactNode {
         return (
             <div>
@@ -142,11 +161,19 @@ export default class MainPage extends Component<{}, IMainPageState> {
                 <input
                     type="button"
                     value="Send"
-                    disabled={!this.state.isConnected}
+                    disabled={!this.state.isConnected || this.state.isSendingRequests}
                     onClick={async (e) => await this.sendRequest(e)}
+                />
+                <input
+                    type="button"
+                    value={this.state.isSendingRequests ? "Stop" : "Start"}
+                    disabled={!this.state.isConnected}
+                    onClick={async (e) => await this.startSendingRequests(e)}
                 />
                 <p>status: {this.state.respond.status}</p>
                 <p>message: {this.state.respond.msg}</p>
+                <p>duration: {this.state.respond.duration}</p>
+                <p>time: {this.state.respond.time}</p>
             </div>
         );
     }
