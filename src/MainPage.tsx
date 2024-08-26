@@ -15,13 +15,13 @@ const defaultRespond: IRespond = {
     status: undefined,
     duration: undefined,
     time: undefined,
-    msg: undefined
+    msg: undefined,
 };
 
 interface IMainPageState {
     count: number;
-    isConnect: boolean;
-    respond: IRespond
+    isConnected: boolean;
+    respond: IRespond;
 }
 
 const HOST: string = window.location.hostname;
@@ -29,39 +29,41 @@ const port: number = 5000;
 const URL: string = `${HOST}:${port}`;
 const urlService: string = `ws://${URL}`;
 const request = {
-    "cmd":[1, 17, 192, 44],
-    "timeOut":100,
-    "ChunksEndTime":1,
-    "NotRespond":false
-}
+    cmd: [1, 17, 192, 44],
+    timeOut: 100,
+    ChunksEndTime: 1,
+    NotRespond: false,
+};
 
-export default class MainPage extends Component<{}, IMainPageState>{
+export default class MainPage extends Component<{}, IMainPageState> {
     timerId: any;
     private wss: WSControl | null = null;
 
-    constructor (props: any){
+    constructor(props: any) {
         super(props);
         this.state = {
             count: 0,
-            isConnect: false,
-            respond: defaultRespond
-        }
+            isConnected: false,
+            respond: defaultRespond,
+        };
     }
 
-    public validateIncomingMessage(respond: any): IServiceRespond | IErrorMessage {
+    public validateIncomingMessage(
+        respond: any
+    ): IServiceRespond | IErrorMessage {
         let msg: any = validationJSON(respond);
         return msg;
     }
 
-    private setConnectionStateToOpen(){
+    private setConnectionStateToOpen() {
         this.setState((state) => ({
-            isConnect: true
+            isConnected: true,
         }));
     }
 
-    private setConnectionStateToClose(){
+    private setConnectionStateToClose() {
         this.setState((state) => ({
-            isConnect: false
+            isConnected: false,
         }));
     }
 
@@ -71,70 +73,81 @@ export default class MainPage extends Component<{}, IMainPageState>{
     }
 
     private disconnect() {
-        this.wss?.close()
+        this.wss?.close();
         this.wss!.onCloseUserHandler = this.setConnectionStateToClose.bind(this);
     }
 
-    private async socketControl(e: any){
-        
-        if (this.state.isConnect){
-            this.disconnect()
+    private async socketControl(e: any) {
+        if (this.state.isConnected) {
+            this.disconnect();
+        } else {
+            await this.connect();
         }
-        else {
-            await this.connect()
-        }
-        
     }
 
     incCounter(e: any) {
-        this.setState( state => ({
-            count: state.count + 1
-        }))
+        this.setState((state) => ({
+            count: state.count + 1,
+        }));
     }
 
     componentDidMount(): void {
-        this.timerId = setInterval(
-            (e: any) => this.incCounter(e),
-            1000
-        )
+        this.timerId = setInterval((e: any) => this.incCounter(e), 1000);
     }
 
     componentWillUnmount(): void {
         clearInterval(this.timerId);
     }
 
-    validateRespond(respond: any): IRespond{
+    validateRespond(respond: any): IRespond {
         const resp: any = JSON.parse(respond);
-        let aboba: IRespond = {...defaultRespond, ...resp};
-        if (aboba.status == "OK"){
-            //TODO: Распарсить массив в строку, удалив первые и последние 2 байта 
-            let array!: Array<number> = aboba.msg
-            console.log(array)
+        let newRespond: IRespond = { ...defaultRespond, ...resp };
+        if (newRespond.status == "OK") {
+            let respondMsgArray: Array<number>;
+            if (Array.isArray(newRespond.msg)) {
+                respondMsgArray = newRespond.msg;
+                console.log(respondMsgArray);
+                //получаем контрольную сумму
+                let checksum: Array<number> = respondMsgArray.slice(-2);
+                //избавляемся от первых и последних 2 байт
+                respondMsgArray = respondMsgArray.slice(2, -2);
+                //получаем строковое сообщение
+                let msg = String.fromCharCode(...respondMsgArray);
+                newRespond.msg = msg;
+            }
         }
-        console.log(aboba)
-        return aboba;
+        console.log(newRespond);
+        return newRespond;
     }
 
-    private async sendRequest(e: any){
-        try{
-            const respond: string | undefined = await this.wss?.send(JSON.stringify(request));
-            this.setState(({respond: this.validateRespond(respond)})) 
-        }
-        catch (error: any) {
+    private async sendRequest(e: any) {
+        try {
+            const respond: string | undefined = await this.wss?.send(
+                JSON.stringify(request)
+            );
+            this.setState({ respond: this.validateRespond(respond) });
+        } catch (error: any) {
             console.log(`error: ${error}`);
         }
-        
     }
 
     render(): React.ReactNode {
-        return(
+        return (
             <div>
-                <input type="button" value={this.state.isConnect? "Disconnect" : "Connect"} onClick={async(e) => await this.socketControl(e)}/>
-                <input type="button" value="Send" disabled={!this.state.isConnect} onClick={async(e) => await this.sendRequest(e)}/>
+                <input
+                    type="button"
+                    value={this.state.isConnected ? "Disconnect" : "Connect"}
+                    onClick={async (e) => await this.socketControl(e)}
+                />
+                <input
+                    type="button"
+                    value="Send"
+                    disabled={!this.state.isConnected}
+                    onClick={async (e) => await this.sendRequest(e)}
+                />
                 <p>status: {this.state.respond.status}</p>
                 <p>message: {this.state.respond.msg}</p>
             </div>
-        )
+        );
     }
-    
 }
