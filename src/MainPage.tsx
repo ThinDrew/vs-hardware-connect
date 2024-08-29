@@ -4,6 +4,7 @@ import { IErrorMessage } from "./interfaces/IErrorMessage";
 import { IServiceRespond } from "./interfaces/IServiceRespond";
 import { validationJSON } from "./lib/util/errors";
 import "./MainPage.css"
+import { delay } from "./lib/util/delay";
 
 enum ConnectionStatus {
     Disconnected = "Disconnected",
@@ -126,22 +127,6 @@ export default class MainPage extends Component<{}, IMainPageState> {
         }
     }
 
-    // private async startSendingRequests(e: any) {
-    //     console.log(this.state.isSendingRequests);
-    //     this.setState(
-    //         (state) => ({
-    //             isSendingRequests: !state.isSendingRequests
-    //         }),
-    //         async () => {
-    //             // Этот колбэк выполнится после обновления состояния
-    //             console.log(this.state.isSendingRequests);
-    //             while (this.state.isSendingRequests) {
-    //                 await this.sendRequest(e);
-    //             }
-    //         }
-    //     );
-    // }
-
     private async startSendingRequests(e: any) {
         console.log(this.state.isSendingRequests);
         this.setState(
@@ -149,8 +134,11 @@ export default class MainPage extends Component<{}, IMainPageState> {
                 isSendingRequests: !state.isSendingRequests
             }),
             async () => {
-                await this.sendRequest(e);
-                
+                console.log(this.state.isSendingRequests);
+                while (this.state.isSendingRequests) {
+                    await this.sendRequest(e);
+                    await delay(10);
+                }
             }
         );
     }
